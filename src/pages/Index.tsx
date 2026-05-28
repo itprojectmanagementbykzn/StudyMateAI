@@ -84,9 +84,9 @@ const Index = () => {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {[
         { label: "Computer Science", value: CSoverallProgressValue, available: true },
-        { label: "Programming", value: 0, available: false },
-        { label: "Mathematics", value: 0, available: false },
-        { label: "AI Basics", value: 0, available: false },
+        { label: "Fashion Illustration", value: 0, available: false },
+        { label: "Fashion Design", value: 0, available: false },
+        { label: "Fashion Business", value: 0, available: false },
       ].map((s) => (
         <div
           key={s.label}
