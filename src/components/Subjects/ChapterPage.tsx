@@ -65,9 +65,6 @@ const ChaptersComponent: React.FC<SubjectProp> = ({ subjectname }) => {
           const completedChapter =
             SubProgress.progress.progress[subsubdata.name] || [];
 
-          console.log("Chapter group:", subsubdata.name);
-          console.log("Completed chapters:", completedChapter);
-
           return (
             <div
               key={subsubdata.name}

@@ -33,7 +33,6 @@ const progressSlice = createSlice({
       builder.addMatcher(ComputerScienceProgressApi.endpoints.getProgress.matchFulfilled, (state, action) => {
         state.userId = action.payload.userId;
         state.progress = action.payload.progress;
-        console.log(action.payload)
       });
       builder.addMatcher(ComputerScienceProgressApi.endpoints.updateProgress.matchFulfilled, (state, action) => {
         state.userId = action.payload.userId;

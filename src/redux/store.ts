@@ -7,11 +7,13 @@ import { persistConfig } from "./persist";
 import latestLessonReducer from "./latestlession.slice"
 import ComputerSciencePogressReducer from "./csprogress.slice"
 import CSOverallporgress from "./csoverallprogress.slice"
+import languageReducer from "./language.slice"
 const rootReducer = combineReducers({
   auth: authReducer,
   latestLesson:latestLessonReducer,
   csprogress:ComputerSciencePogressReducer,
   csoverallprogress:CSOverallporgress,
+  language: languageReducer,
   [baseAPI.reducerPath]: baseAPI.reducer,
 });
 
@@ -20,7 +22,7 @@ const rootReducer = combineReducers({
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: persistedReducer as any,
+  reducer: persistedReducer as any, // eslint-disable-line @typescript-eslint/no-explicit-any
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }).concat(
       baseAPI.middleware

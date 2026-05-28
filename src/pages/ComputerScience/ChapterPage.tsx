@@ -1,195 +1,154 @@
-
-import ChaptersComponents from "@/components/Subjects/ChapterPage"
 import { Helmet } from "react-helmet-async";
+import { useEffect, type ReactNode } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { GradientSpotlight } from "@/components/visual/GradientSpotlight";
-import { GeminiChat } from "@/components/ai/GeminiChat";
-import { useNavigate } from "react-router-dom";
-import {GeminiChat2} from "@/components/ai/GeminiChat2"
-import { useParams } from "react-router-dom";
-import { useSearchParams } from "react-router-dom";
-/* Pags */
-import ChapterOnePage from "@/components/ComputerScience/Chapter1"
+import StudyChat from "@/components/ai/StudyChat";
+import ExplainInBurmese from "@/components/ai/ExplainInBurmese";
+import { setLatestLesson } from "@/redux/latestlession.slice";
+import { type LessonContext } from "@/lib/gemini";
+/* Chapter content (JavaScript) */
+import ChapterOnePage from "@/components/ComputerScience/Chapter1";
 import ChapterTwoPage from "@/components/ComputerScience/Chapter2";
-import ChapterThreePage from "@/components/ComputerScience/Chapter3"
+import ChapterThreePage from "@/components/ComputerScience/Chapter3";
 import ChapterFourPage from "@/components/ComputerScience/Chapter4";
 import ChapterFivePage from "@/components/ComputerScience/Chapter5";
 import ChapterSixPage from "@/components/ComputerScience/Chapter6";
-/* React */
-import ChapterThreePageFE from "@/components/ComputerScience/FrontendDev/Chapter3FE";
-import ChapterFourPageFE from "@/components/ComputerScience/FrontendDev/Chapter4FE";
-import ChapterTwoPageFE from "@/components/ComputerScience/FrontendDev/Chapter2FE";
-import ChapterOnePageFE from "@/components/ComputerScience/FrontendDev/Chapter1FE";
-const CSChapterPage = ()=>{
-    const navigate = useNavigate()
-    const {chapter} = useParams();
-    const [searchParams] = useSearchParams();
-    const subject = searchParams.get("subject");
-    const chaptername = searchParams.get("chaptername");
-    const topic = searchParams.get("topic");
-    const option = searchParams.get("option");
-    let content:any;
-    if(chapter==="1"){
-        content=<ChapterOnePage/>
-    }else if(chapter==="2"){
-        content=<ChapterTwoPage/>
-    }else if(chapter==="3"){
-      content=<ChapterThreePage/>
-    }else if(chapter==="4"){
-      content=<ChapterFourPage/>
-    }else if(chapter==="5"){
-      content=<ChapterFivePage/>
-    }else if(chapter==="6"){
-      content=<ChapterSixPage/>
-    }
-    return(
-        <div className="min-h-screen bg-background">
-              <Helmet>
-                <title>AI Study Dashboard | Assistant AI</title>
-                <meta name="description" content="Track learning progress and chat with an AI tutor on the Assistant AI study dashboard." />
-                <link rel="canonical" href="/" />
-              </Helmet>
-              <div className="flex">
-                <Sidebar />
-                <div className="flex-1 min-w-0">
-                  <Topbar />
-                  <main className="container py-6 space-y-6">
-                    <section className="relative overflow-hidden rounded-xl border p-6 bg-card">
-                      <GradientSpotlight />
-                      <h1 className="text-2xl md:text-3xl font-semibold">AI Study Dashboard</h1>
-                      <p className="text-muted-foreground mt-1">Welcome back! You have 2 pending quizzes and 3 recommended topics</p>
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        <Badge variant="secondary">Study Streak • 7 days</Badge>
-                        <Badge variant="secondary">Total Time • 18.5 hours</Badge>
-                        <Badge variant="secondary">Achievements • 12</Badge>
-                      </div>
-                    </section>
-        
-                    <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                     {/* Quizes */}
-                      <div className="lg:col-span-2">
-                        {content}
-                      </div>
-                      <div className="lg:col-span-1">
-                        {/* AI Assistant panel */}
-                        <Card>
-                          <CardContent className="pt-6">
-                            <p className="text-sm text-muted-foreground mb-3">Your personalized study helper</p>
-                            <Button asChild variant="hero" className="w-full mb-4">
-                              <a href="#assistant">Start a conversation</a>
-                            </Button>
-                            {/* Mount the chat below */}
-                            <div id="assistant" />
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </section>
-        
-                  {/*   <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <Card className="lg:col-span-2">
-                        <CardHeader>
-                          <CardTitle>Upcoming Quizzes</CardTitle>
-                        </CardHeader>
-                        <CardContent className="divide-y">
-                          {[
-                            { subject: "Mathematics", topic: "Calculus: Derivatives", difficulty: "Hard", time: "30 min", questions: 15 },
-                            { subject: "Science", topic: "Physics: Newton's Laws", difficulty: "Medium", time: "20 min", questions: 10 },
-                            { subject: "History", topic: "World War II", difficulty: "Medium", time: "40 min", questions: 20 },
-                          ].map((q, i) => (
-                            <div key={i} className="py-4 flex items-center justify-between gap-4">
-                              <div>
-                                <div className="font-medium">{q.subject}</div>
-                                <p className="text-sm text-muted-foreground">{q.topic}</p>
-                                <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                  <span>{q.questions} questions</span>
-                                  <span>•</span>
-                                  <span>{q.time}</span>
-                                  <Badge variant="secondary">{q.difficulty}</Badge>
-                                </div>
-                              </div>
-                              <Button onClick={() => navigate("/option/")}>Start Quiz</Button>
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
-        
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Recommended Learning</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          {[
-                            { title: "Advanced Calculus", meta: "8 weeks • Advanced" },
-                            { title: "Quantum Physics Basics", meta: "10 weeks • Intermediate" },
-                            { title: "Creative Writing", meta: "6 weeks • Intermediate" },
-                          ].map((c, i) => (
-                            <div key={i} className="rounded-lg border p-4">
-                              <div className="font-medium">{c.title}</div>
-                              <p className="text-sm text-muted-foreground">{c.meta}</p>
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
-                    </section> */}
-                      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <Card className="lg:col-span-2">
-                        <CardHeader>
-                          <CardTitle>Chapter {chapter} Quizzes</CardTitle>
-                        </CardHeader>
-                        <CardContent className="divide-y">
-                          <div className="py-2 flex items-center justify-between gap-4">
-                              <div>
-                                <div className="font-medium">{chaptername}</div>
-          
-                                <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                  <span>{topic}</span>
-                                  {/* <span>•</span>
-                                  <span>{}k</span> */}
-                                  <Badge variant="secondary">{}</Badge>
-                                </div>
-                              </div>
-                              <Button onClick={() => navigate(`/finalquiz?subject=${subject}&chapter=${chapter}&chaptername=${chaptername}&topic=${topic}&option=${option}`)}>Start Quiz</Button>
-                            </div>
-                        </CardContent>
-                      </Card>
-        
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Recommended Learning</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          {[
-                            { title: "Advanced Calculus", meta: "8 weeks • Advanced" },
-                            { title: "Quantum Physics Basics", meta: "10 weeks • Intermediate" },
-                            { title: "Creative Writing", meta: "6 weeks • Intermediate" },
-                          ].map((c, i) => (
-                            <div key={i} className="rounded-lg border p-4">
-                              <div className="font-medium">{c.title}</div>
-                              <p className="text-sm text-muted-foreground">{c.meta}</p>
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
-                    </section>
-        
-                    {/* Inline Chat Section */}
-                    <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <div className="lg:col-start-3">
-                        <GeminiChat2 />
-                      </div>
-                    </section>
-                  </main>
+
+const chapterContent: Record<string, ReactNode> = {
+  "1": <ChapterOnePage />,
+  "2": <ChapterTwoPage />,
+  "3": <ChapterThreePage />,
+  "4": <ChapterFourPage />,
+  "5": <ChapterFivePage />,
+  "6": <ChapterSixPage />,
+};
+
+const parseTopics = (raw: string | null): string[] => {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(String) : [String(raw)];
+  } catch {
+    return [raw];
+  }
+};
+
+const CSChapterPage = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { chapter } = useParams();
+  const [searchParams] = useSearchParams();
+  const subject = searchParams.get("subject");
+  const chaptername = searchParams.get("chaptername");
+  const topicParam = searchParams.get("topic");
+  const option = searchParams.get("option");
+
+  const chapterNo = chapter ?? "";
+  const topics = parseTopics(topicParam);
+
+  const lessonContext: LessonContext = {
+    title: chaptername ?? "Lesson",
+    chapter: chapterNo,
+    subject: subject ?? "Computer Science",
+  };
+
+  // Keep the AI tutor's context in sync with the chapter being viewed.
+  useEffect(() => {
+    dispatch(
+      setLatestLesson({
+        subject: subject ?? "Computer Science",
+        chapter: Number(chapterNo) || 0,
+        title: chaptername ?? "Lesson",
+        topic: topics.length ? topics : [chaptername ?? "Lesson"],
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject, chaptername, topicParam, chapterNo]);
+
+  const content = chapterContent[chapterNo] ?? (
+    <p className="text-muted-foreground">Lesson content coming soon.</p>
+  );
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{`${chaptername ?? "Chapter"} | StudyMateAI`}</title>
+        <meta
+          name="description"
+          content="Learn with interactive lessons and a bilingual AI tutor on StudyMateAI."
+        />
+      </Helmet>
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1 min-w-0">
+          <Topbar />
+          <main className="container py-6 space-y-6">
+            <section className="relative overflow-hidden rounded-xl border p-6 bg-card">
+              <GradientSpotlight />
+              <h1 className="text-2xl md:text-3xl font-semibold">
+                {chaptername ?? "Chapter"}
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Chapter {chapterNo} • {subject ?? "Computer Science"}
+              </p>
+              {topics.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {topics.map((t, i) => (
+                    <ExplainInBurmese key={i} topic={t} lesson={lessonContext} />
+                  ))}
                 </div>
+              )}
+            </section>
+
+            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                {content}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Chapter {chapterNo} Quiz</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <div className="font-medium">{chaptername}</div>
+                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {topics.map((t, i) => (
+                          <Badge key={i} variant="secondary">
+                            {t}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() =>
+                        navigate(
+                          `/finalquiz?subject=${subject}&chapter=${chapterNo}&chaptername=${chaptername}&topic=${encodeURIComponent(
+                            topicParam ?? ""
+                          )}&option=${option}`
+                        )
+                      }
+                    >
+                      Start Quiz
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-    )
-}
+
+              <div className="lg:col-span-1">
+                <StudyChat className="h-[600px] sticky top-20" />
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default CSChapterPage;

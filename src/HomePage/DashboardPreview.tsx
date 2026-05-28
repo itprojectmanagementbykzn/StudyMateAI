@@ -58,7 +58,7 @@ const DashboardPreview = () => {
         <div className="grid md:grid-cols-4 gap-6 mb-12">
           {stats.map((stat, index) => {
           const IconComponent = stat.icon;
-          return;
+          return null;
         })}
         </div>
 

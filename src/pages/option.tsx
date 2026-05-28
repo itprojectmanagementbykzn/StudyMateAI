@@ -37,7 +37,7 @@ const OptionPage = () => {
     visible: (i) => ({
       opacity: 1,
       y: 0,
-      transition: { delay: 0.1 * i, duration: 0.4, ease: "easeOut" },
+      transition: { delay: 0.1 * i, duration: 0.4, ease: "easeOut" as const },
     }),
   };
 

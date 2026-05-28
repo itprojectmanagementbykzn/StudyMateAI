@@ -44,6 +44,7 @@ const GameifiedProgress = () => {
     points: 2120,
     rank: 3
   }];
-  return;
+  // TODO: render the achievements/leaderboard sections (see README roadmap).
+  return null;
 };
 export default GameifiedProgress;

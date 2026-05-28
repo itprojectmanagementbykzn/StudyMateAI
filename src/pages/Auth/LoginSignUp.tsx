@@ -32,7 +32,12 @@ export const LoginSignUp = () => {
       if (isLogin) {
         await login({ email: data.email!, password: data.password! }).unwrap();
       } else {
-        await signUp(data).unwrap();
+        await signUp({
+          email: data.email!,
+          password: data.password!,
+          name: data.name ?? "",
+          studentid: data.studentid ?? "",
+        }).unwrap();
       }
       reset();
       navigate("/dashboard");

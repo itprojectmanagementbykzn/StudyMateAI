@@ -43,7 +43,7 @@ const App = () => (
             <Route path="/aichat" element={<RouteGuard><MainChatbot /></RouteGuard>} />
             <Route path="/subject/:subjectname" element={<RouteGuard><ChaptersPage /></RouteGuard>} />
             <Route path="/computerscience/:subsubject/:chapter" element={<RouteGuard><CSChapterPage/></RouteGuard>}/>
-            <Route path="finalquiz" element={<RouteGuard><FinalChapterQuiz/></RouteGuard>}/>
+            <Route path="/finalquiz" element={<RouteGuard><FinalChapterQuiz/></RouteGuard>}/>
             {/* Public Route */}
             <Route path="/auth" element={<LoginSignUp/>}/>
             <Route path="/" element={<IndexPage />} />
