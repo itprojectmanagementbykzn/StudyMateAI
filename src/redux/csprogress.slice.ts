@@ -32,11 +32,11 @@ const progressSlice = createSlice({
   extraReducers: (builder) => {
       builder.addMatcher(ComputerScienceProgressApi.endpoints.getProgress.matchFulfilled, (state, action) => {
         state.userId = action.payload.userId;
-        state.progress = action.payload.progress;
+        state.progress = action.payload.progress.progress;
       });
       builder.addMatcher(ComputerScienceProgressApi.endpoints.updateProgress.matchFulfilled, (state, action) => {
         state.userId = action.payload.userId;
-        state.progress= action.payload.progress;
+        state.progress = action.payload.progress.progress;
       });
     },
 });

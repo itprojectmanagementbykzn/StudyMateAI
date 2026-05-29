@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { LockClosedIcon } from "@heroicons/react/24/solid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SubjectDataType } from "../SubjectData/ComputerScience/CSData";
-import ComputerScienceData from "../SubjectData/ComputerScience/CSData";
+import { type SubjectDataType } from "@/components/SubjectData/ComputerScience/CSData";
+import { useLessonCatalog } from "@/lib/lessons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Trophy } from "lucide-react";
 import { useDispatch } from "react-redux";
@@ -22,7 +22,9 @@ interface SubjectProp {
 interface SubProgessType {
   userId: string;
   progress: {
-    [courseName: string]: number[];
+    progress: {
+      [courseName: string]: number[];
+    };
   };
 }
 
@@ -35,6 +37,7 @@ const ChaptersComponent: React.FC<SubjectProp> = ({ subjectname }) => {
     isLoading,
     isError,
   } = useGetProgressQuery();
+  const { data: catalog } = useLessonCatalog();
 
   useEffect(() => {
     if (location.hash) {
@@ -51,7 +54,7 @@ const ChaptersComponent: React.FC<SubjectProp> = ({ subjectname }) => {
   if (isLoading) return <p>Loading progress...</p>;
   if (isError || !ComputerSciencProgess) return <p>Failed to load progress.</p>;
 
-  const SubData: SubjectDataType = ComputerScienceData;
+  const SubData: SubjectDataType = catalog[0];
   const SubProgress: SubProgessType = ComputerSciencProgess;
 
   return (

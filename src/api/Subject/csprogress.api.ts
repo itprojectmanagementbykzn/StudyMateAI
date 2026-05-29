@@ -3,8 +3,11 @@ import { baseAPI } from "../base.config";
 
 interface SubProgressType {
   userId: string;
+  // The backend nests the per-course progress map under progress.progress.
   progress: {
-    [courseName: string]: number[];
+    progress: {
+      [courseName: string]: number[];
+    };
   };
 }
 

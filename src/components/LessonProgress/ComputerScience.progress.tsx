@@ -1,8 +1,8 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import ProgressCircle from "@/components/ui/progress-circle";
 import { useNavigate } from "react-router-dom";
-import ComputerScienceData from "../SubjectData/ComputerScience/CSData";
 import { useGetProgressQuery } from "@/api/Subject/csprogress.api";
+import { useLessonCatalog } from "@/lib/lessons";
 import { useDispatch } from "react-redux";
 import { setComputerScienceProgress } from "@/redux/csoverallprogress.slice";
 import { useEffect } from "react";
@@ -13,15 +13,18 @@ export const ComputerScienceProgressComponent = () => {
 
   const { data: ComputerSciencProgess, isLoading, isError } =
     useGetProgressQuery();
+  const { data: catalog } = useLessonCatalog();
+  const csData = catalog[0];
 
-  const safeProgress = ComputerSciencProgess?.progress?.progress || {};
+  const safeProgress: Record<string, number[]> =
+    ComputerSciencProgess?.progress?.progress ?? {};
 
-  const totalChaptersAll = ComputerScienceData.subSubject.reduce(
+  const totalChaptersAll = csData.subSubject.reduce(
     (sum, group) => sum + group.chapter.length,
     0
   );
 
-  const completedAll = ComputerScienceData.subSubject.reduce(
+  const completedAll = csData.subSubject.reduce(
     (sum, group) => sum + (safeProgress[group.name]?.length || 0),
     0
   );
@@ -83,7 +86,7 @@ export const ComputerScienceProgressComponent = () => {
       {/* Subsubject grid */}
       <section>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-          {ComputerScienceData.subSubject.map((group) => {
+          {csData.subSubject.map((group) => {
             const useProgress = safeProgress[group.name] || [];
             const totalChapter = group.chapter.length;
             const completeChapter = useProgress.length;

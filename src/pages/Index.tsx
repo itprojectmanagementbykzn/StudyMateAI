@@ -2,14 +2,13 @@ import { Helmet } from "react-helmet-async";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { Menu, BookOpen, Brain, Clock } from "lucide-react";
+import { Menu, BookOpen } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();

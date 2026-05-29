@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.api.json"
   },
   "dependencies": {
     "@google/genai": "^2.7.0",

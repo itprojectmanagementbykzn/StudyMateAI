@@ -25,5 +25,12 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-unused-vars": "off",
     },
+  },
+  {
+    // Server-side / tooling code runs in Node, not the browser.
+    files: ["api/**/*.{ts,tsx}", "src/server/**/*.{ts,tsx}", "*.config.ts"],
+    languageOptions: {
+      globals: globals.node,
+    },
   }
 );

@@ -19,7 +19,7 @@ const latestLessonSlice = createSlice({
   name: "latestlesson",
   initialState,
   reducers: {
-    setLatestLesson: (state, action: PayloadAction<LatestlessonType>) => {
+    setLatestLesson: (_state, action: PayloadAction<LatestlessonType>) => {
       return action.payload; // overwrite the entire state
     },
   },

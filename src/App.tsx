@@ -7,7 +7,6 @@ import { HelmetProvider } from "react-helmet-async";
 /* Auth */
 import { LoginSignUp } from "./pages/Auth/LoginSignUp";
 import Index from "./pages/Index";
-import index_page from "./HomePage/index";
 import Lessons from "./pages/Lessons";
 import Quiz from "./pages/Quiz";
 import NotFound from "./pages/NotFound";
