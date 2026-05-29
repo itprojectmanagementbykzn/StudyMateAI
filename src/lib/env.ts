@@ -4,8 +4,9 @@ export const API_BASE_URL =
   (import.meta.env.VITE_API_URL as string | undefined) ||
   "https://hackathon-20uq.onrender.com";
 
-// Latest Gemini Flash model. Pinned for predictable behavior; override with
-// VITE_GEMINI_MODEL (e.g. "gemini-flash-latest" for the rolling alias).
+// Latest Gemini Flash. Defaults to the auto-updating "latest" alias so the app
+// keeps working as Google rolls model versions; pin a specific version via
+// VITE_GEMINI_MODEL (e.g. "gemini-2.5-flash") if you need reproducibility.
 export const GEMINI_MODEL =
   (import.meta.env.VITE_GEMINI_MODEL as string | undefined) ||
-  "gemini-3.5-flash";
+  "gemini-flash-latest";

@@ -110,8 +110,8 @@ const Lessons = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Stay tuned for Mathematics, Physics, and other exciting
-                    subjects.
+                    Stay tuned for Fashion Illustration, Fashion Design, and
+                    more.
                   </p>
                   <Button variant="outline" className="mt-4 w-full" disabled>
                     Coming Soon

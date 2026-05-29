@@ -132,9 +132,9 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {[
-                    { name: "Data Structures", status: "Coming soon" },
-                    { name: "Networks", status: "Coming soon" },
-                    { name: "Operating Systems", status: "Coming soon" },
+                    { name: "Pattern Making", status: "Coming soon" },
+                    { name: "Textile Science", status: "Coming soon" },
+                    { name: "Fashion Marketing", status: "Coming soon" },
                   ].map((s, i) => (
                     <div
                       key={i}

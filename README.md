@@ -52,7 +52,7 @@ See [`.env.example`](./.env.example). `.env` is git-ignored — never commit it.
 | ---------------------- | -------- | ------------------------------------------------------------------ |
 | `VITE_GEMINI_API_KEY`  | Yes      | Google Gemini API key ([get one](https://aistudio.google.com/app/apikey)). |
 | `VITE_API_URL`         | No       | Backend base URL. Defaults to the hosted hackathon API.            |
-| `VITE_GEMINI_MODEL`    | No       | Gemini model id. Defaults to `gemini-3.5-flash`.                   |
+| `VITE_GEMINI_MODEL`    | No       | Gemini model id. Defaults to `gemini-flash-latest` (auto-updating Flash). |
 
 > **Security note:** Vite exposes `VITE_*` variables to the browser, so the
 > Gemini key ships to the client. For production, proxy Gemini calls through a

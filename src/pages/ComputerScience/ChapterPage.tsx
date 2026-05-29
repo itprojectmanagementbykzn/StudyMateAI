@@ -12,21 +12,35 @@ import StudyChat from "@/components/ai/StudyChat";
 import ExplainInBurmese from "@/components/ai/ExplainInBurmese";
 import { setLatestLesson } from "@/redux/latestlession.slice";
 import { type LessonContext } from "@/lib/gemini";
-/* Chapter content (JavaScript) */
+/* Chapter content */
 import ChapterOnePage from "@/components/ComputerScience/Chapter1";
 import ChapterTwoPage from "@/components/ComputerScience/Chapter2";
 import ChapterThreePage from "@/components/ComputerScience/Chapter3";
 import ChapterFourPage from "@/components/ComputerScience/Chapter4";
 import ChapterFivePage from "@/components/ComputerScience/Chapter5";
 import ChapterSixPage from "@/components/ComputerScience/Chapter6";
+import ChapterOnePageFE from "@/components/ComputerScience/FrontendDev/Chapter1FE";
+import ChapterTwoPageFE from "@/components/ComputerScience/FrontendDev/Chapter2FE";
+import ChapterThreePageFE from "@/components/ComputerScience/FrontendDev/Chapter3FE";
+import ChapterFourPageFE from "@/components/ComputerScience/FrontendDev/Chapter4FE";
 
-const chapterContent: Record<string, ReactNode> = {
-  "1": <ChapterOnePage />,
-  "2": <ChapterTwoPage />,
-  "3": <ChapterThreePage />,
-  "4": <ChapterFourPage />,
-  "5": <ChapterFivePage />,
-  "6": <ChapterSixPage />,
+// Lesson content keyed by sub-subject slug (from the route) then chapter number.
+// Backend chapters have no content yet, so they fall through to a placeholder.
+const contentBySubsubject: Record<string, Record<string, ReactNode>> = {
+  javascript: {
+    "1": <ChapterOnePage />,
+    "2": <ChapterTwoPage />,
+    "3": <ChapterThreePage />,
+    "4": <ChapterFourPage />,
+    "5": <ChapterFivePage />,
+    "6": <ChapterSixPage />,
+  },
+  "frontend-development": {
+    "1": <ChapterOnePageFE />,
+    "2": <ChapterTwoPageFE />,
+    "3": <ChapterThreePageFE />,
+    "4": <ChapterFourPageFE />,
+  },
 };
 
 const parseTopics = (raw: string | null): string[] => {
@@ -42,7 +56,7 @@ const parseTopics = (raw: string | null): string[] => {
 const CSChapterPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { chapter } = useParams();
+  const { subsubject, chapter } = useParams();
   const [searchParams] = useSearchParams();
   const subject = searchParams.get("subject");
   const chaptername = searchParams.get("chaptername");
@@ -71,7 +85,7 @@ const CSChapterPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subject, chaptername, topicParam, chapterNo]);
 
-  const content = chapterContent[chapterNo] ?? (
+  const content = contentBySubsubject[subsubject ?? ""]?.[chapterNo] ?? (
     <p className="text-muted-foreground">Lesson content coming soon.</p>
   );
 
