@@ -38,25 +38,33 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-#    then edit .env and add your Gemini API key
+#    then edit .env and set GEMINI_API_KEY=<your key>
 
 # 3. Start the dev server (http://localhost:8080)
 npm run dev
 ```
 
+`npm run dev` also serves the `/api/gemini` and `/api/lessons` routes (via Vite
+dev middleware using the same handlers as the deployed serverless functions), so
+the AI tutor and lessons work locally without `vercel dev` or a separate API
+process.
+
 ### Environment variables
 
 See [`.env.example`](./.env.example). `.env` is git-ignored — never commit it.
 
-| Variable               | Required | Description                                                        |
-| ---------------------- | -------- | ------------------------------------------------------------------ |
-| `VITE_GEMINI_API_KEY`  | Yes      | Google Gemini API key ([get one](https://aistudio.google.com/app/apikey)). |
-| `VITE_API_URL`         | No       | Backend base URL. Defaults to the hosted hackathon API.            |
-| `VITE_GEMINI_MODEL`    | No       | Gemini model id. Defaults to `gemini-flash-latest` (auto-updating Flash). |
+| Variable             | Scope  | Required | Description                                                                                  |
+| -------------------- | ------ | -------- | -------------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY`     | Server | Yes      | Google Gemini API key ([get one](https://aistudio.google.com/app/apikey)). Read only by the `/api` functions — never shipped to the browser. |
+| `GEMINI_MODEL`       | Server | No       | Gemini model id. Defaults to `gemini-flash-latest` (auto-updating Flash).                    |
+| `VITE_API_URL`       | Client | No       | Backend base URL for quizzes / progress / auth. Defaults to the hosted hackathon API.        |
+| `VITE_GEMINI_PROXY_URL` | Client | No    | Override the AI proxy endpoint. Defaults to `/api/gemini`.                                   |
 
-> **Security note:** Vite exposes `VITE_*` variables to the browser, so the
-> Gemini key ships to the client. For production, proxy Gemini calls through a
-> backend and restrict the key. See _Roadmap_ below.
+> **Security:** the Gemini key is **server-side only** (`GEMINI_API_KEY`, no
+> `VITE_` prefix), so it and the `@google/genai` SDK never ship in the client
+> bundle. Only `VITE_*` variables are exposed to the browser, and none of them
+> are secret. On Vercel, set `GEMINI_API_KEY` in **Project Settings →
+> Environment Variables** (not in a committed file).
 
 ## Scripts
 
@@ -71,7 +79,15 @@ See [`.env.example`](./.env.example). `.env` is git-ignored — never commit it.
 
 ## How the AI + Burmese mode works
 
-All Gemini access goes through a single helper, [`src/lib/gemini.ts`](./src/lib/gemini.ts):
+The browser never calls Gemini directly. The client helper
+[`src/lib/gemini.ts`](./src/lib/gemini.ts) `POST`s to the serverless proxy at
+**`/api/gemini`** ([`api/gemini.ts`](./api/gemini.ts)), which holds the API key
+and talks to Google server-side. The prompt-building and response-parsing logic
+is pure and SDK-free in [`src/lib/gemini-core.ts`](./src/lib/gemini-core.ts),
+shared by the client and the proxy handler
+([`src/server/geminiHandler.ts`](./src/server/geminiHandler.ts)).
+
+The client helper exposes three functions:
 
 - `sendChat()` powers the tutor chat (`StudyChat` / `MainChatbot`).
 - `explainTopic()` powers the **Explain in Burmese** buttons.
@@ -86,6 +102,7 @@ Gemini. Burmese text renders via the bundled "Noto Sans Myanmar" font.
 ## Project structure
 
 ```
+api/              Vercel serverless functions: gemini.ts (AI proxy), lessons.ts
 src/
   api/            RTK Query endpoints (auth, progress) + base config
   components/
@@ -93,7 +110,8 @@ src/
     layout/       Sidebar (with language toggle), Topbar
     ComputerScience/  lesson content per chapter
     Subjects/     chapter list with progress
-  lib/            gemini.ts, quiz.ts, env.ts, keys.ts, utils.ts
+  lib/            gemini.ts (proxy client), gemini-core.ts, quiz.ts, lessons.ts, env.ts, utils.ts
+  server/         geminiHandler.ts, lessons.ts (shared by /api + Vite dev middleware)
   pages/          Dashboard, Lessons, Quiz, FinalChapterQuiz, chapter pages
   redux/          store, slices (auth, language, progress, latest lesson)
 ```
@@ -106,9 +124,6 @@ lint, type-check, tests, and build on every push and pull request.
 
 ## Roadmap / follow-ups
 
-- Proxy the Gemini API key through a backend instead of exposing it client-side.
-- Tighten the TypeScript config (`strict` / `strictNullChecks` / `noImplicitAny`)
-  incrementally across the codebase.
 - Map chapter content by sub-subject (currently the chapter content view is
   wired to the JavaScript track).
 - Expand test coverage (component and integration tests).
