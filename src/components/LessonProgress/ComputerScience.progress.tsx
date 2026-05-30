@@ -1,25 +1,45 @@
-import { Helmet } from "react-helmet-async";
-import Sidebar from "@/components/layout/Sidebar";
-import Topbar from "@/components/layout/Topbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import ProgressCircle from "@/components/ui/progress-circle";
-import { Link, useNavigate } from "react-router-dom";
-import ComputerScienceData from "../SubjectData/ComputerScience/CSData";
-import { useGetProgressQuery } from "@/api/Subject/csprogress.api";
-import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useLessonCatalog } from "@/lib/lessons";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 import { setComputerScienceProgress } from "@/redux/csoverallprogress.slice";
 import { useEffect } from "react";
-import { RootState } from "@/redux/store";
 
 export const ComputerScienceProgressComponent = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { data: ComputerSciencProgess, isLoading, isError } =
-    useGetProgressQuery();
+  const { progress: safeProgress, status } = useSelector(
+    (s: RootState) => s.csprogress
+  );
+  const { data: catalog } = useLessonCatalog();
+  const csData = catalog[0];
 
-  if (isLoading) {
+  const totalChaptersAll = csData.subSubject.reduce(
+    (sum, group) => sum + group.chapter.length,
+    0
+  );
+
+  const completedAll = csData.subSubject.reduce(
+    (sum, group) => sum + (safeProgress[group.name]?.length || 0),
+    0
+  );
+
+  const overallProgress =
+    totalChaptersAll > 0
+      ? Math.round((completedAll / totalChaptersAll) * 100)
+      : 0;
+
+  // Keep the dashboard's overall progress in sync (side effect, not render).
+  useEffect(() => {
+    if (status === "ready") {
+      dispatch(setComputerScienceProgress(overallProgress));
+    }
+  }, [status, overallProgress, dispatch]);
+
+  if (status === "loading" || status === "idle") {
     return (
       <main className="flex justify-center items-center h-[60vh]">
         <p className="text-lg font-medium text-muted-foreground">
@@ -29,7 +49,7 @@ export const ComputerScienceProgressComponent = () => {
     );
   }
 
-  if (isError || !ComputerSciencProgess) {
+  if (status === "error") {
     return (
       <main className="flex justify-center items-center h-[60vh]">
         <p className="text-lg font-medium text-red-500">
@@ -39,28 +59,9 @@ export const ComputerScienceProgressComponent = () => {
     );
   }
 
-  const safeProgress = ComputerSciencProgess.progress.progress || {};
-
-  const totalChaptersAll = ComputerScienceData.subSubject.reduce(
-    (sum, chapter) => sum + chapter.chapter.length,
-    0
-  );
-
-  const completedAll = ComputerScienceData.subSubject.reduce((sum, chapter) => {
-    const useProgress = safeProgress[chapter.name] || [];
-    return sum + useProgress.length;
-  }, 0);
-
-  const overallProgress =
-    totalChaptersAll > 0
-      ? Math.round((completedAll / totalChaptersAll) * 100)
-      : 0;
-
-  dispatch(setComputerScienceProgress(overallProgress));
-
   return (
     <main>
-      {/* ✅ Top-level overall progress */}
+      {/* Top-level overall progress */}
       <section className="mb-6">
         <Card
           onClick={() => navigate("/subject/computerscience")}
@@ -80,26 +81,24 @@ export const ComputerScienceProgressComponent = () => {
         </Card>
       </section>
 
-      {/* ✅ Subsubject grid */}
+      {/* Subsubject grid */}
       <section>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-          {ComputerScienceData.subSubject.map((chapter) => {
-            const useProgress = safeProgress[chapter.name] || [];
-            const totalChapter = chapter.chapter.length;
+          {csData.subSubject.map((group) => {
+            const useProgress = safeProgress[group.name] || [];
+            const totalChapter = group.chapter.length;
             const completeChapter = useProgress.length;
-            const chapterProgress = Math.round(
-              (completeChapter / totalChapter) * 100
-            );
+            const chapterProgress =
+              totalChapter > 0
+                ? Math.round((completeChapter / totalChapter) * 100)
+                : 0;
 
             return (
               <Card
-                key={chapter.name}
+                key={group.name}
                 onClick={() =>
                   navigate(
-                    `/subject/computerscience#${chapter.name.replace(
-                      /\s+/g,
-                      "-"
-                    )}`
+                    `/subject/computerscience#${group.name.replace(/\s+/g, "-")}`
                   )
                 }
                 className="cursor-pointer hover:shadow-lg transition rounded-xl flex flex-col justify-between"
@@ -107,7 +106,7 @@ export const ComputerScienceProgressComponent = () => {
                 <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 gap-4">
                   <div>
                     <CardTitle className="text-base sm:text-lg font-semibold">
-                      {chapter.name}
+                      {group.name}
                     </CardTitle>
                     <p className="text-xs sm:text-sm text-muted-foreground">
                       {completeChapter} / {totalChapter} chapters completed
@@ -125,5 +124,3 @@ export const ComputerScienceProgressComponent = () => {
 };
 
 export default ComputerScienceProgressComponent;
-
-

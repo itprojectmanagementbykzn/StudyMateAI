@@ -7,13 +7,14 @@ import { HelmetProvider } from "react-helmet-async";
 /* Auth */
 import { LoginSignUp } from "./pages/Auth/LoginSignUp";
 import Index from "./pages/Index";
-import index_page from "./HomePage/index";
 import Lessons from "./pages/Lessons";
 import Quiz from "./pages/Quiz";
 import NotFound from "./pages/NotFound";
 import OptionPage from "./pages/option";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
+import { AuthProvider } from "./lib/auth";
+import { ProgressSync } from "./components/ProgressSync";
 import { RouteGuard } from "./components/RouteGuard/RouteGuard";
 //New
 import MainChatbot from "./components/ai/MainChatbot";
@@ -25,6 +26,8 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <Provider store={store}>
+    <AuthProvider>
+    <ProgressSync />
     <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -43,7 +46,7 @@ const App = () => (
             <Route path="/aichat" element={<RouteGuard><MainChatbot /></RouteGuard>} />
             <Route path="/subject/:subjectname" element={<RouteGuard><ChaptersPage /></RouteGuard>} />
             <Route path="/computerscience/:subsubject/:chapter" element={<RouteGuard><CSChapterPage/></RouteGuard>}/>
-            <Route path="finalquiz" element={<RouteGuard><FinalChapterQuiz/></RouteGuard>}/>
+            <Route path="/finalquiz" element={<RouteGuard><FinalChapterQuiz/></RouteGuard>}/>
             {/* Public Route */}
             <Route path="/auth" element={<LoginSignUp/>}/>
             <Route path="/" element={<IndexPage />} />
@@ -54,6 +57,7 @@ const App = () => (
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>
+    </AuthProvider>
   </Provider>
 );
 

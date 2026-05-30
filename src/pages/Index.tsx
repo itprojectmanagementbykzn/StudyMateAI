@@ -2,14 +2,13 @@ import { Helmet } from "react-helmet-async";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { Menu, BookOpen, Brain, Clock } from "lucide-react";
+import { Menu, BookOpen } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -84,9 +83,9 @@ const Index = () => {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {[
         { label: "Computer Science", value: CSoverallProgressValue, available: true },
-        { label: "Programming", value: 60, available: false },
-        { label: "Mathematics", value: 45, available: false },
-        { label: "AI Basics", value: 30, available: false },
+        { label: "Fashion Illustration", value: 0, available: false },
+        { label: "Fashion Design", value: 0, available: false },
+        { label: "Fashion Business", value: 0, available: false },
       ].map((s) => (
         <div
           key={s.label}
@@ -132,9 +131,9 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {[
-                    { name: "Data Structures", status: "In 2 days" },
-                    { name: "Networks", status: "In 5 days" },
-                    { name: "Operating Systems", status: "Next week" },
+                    { name: "Pattern Making", status: "Coming soon" },
+                    { name: "Textile Science", status: "Coming soon" },
+                    { name: "Fashion Marketing", status: "Coming soon" },
                   ].map((s, i) => (
                     <div
                       key={i}
@@ -207,7 +206,9 @@ const Index = () => {
                     Chat with your AI tutor for instant help with quizzes and study
                     plans.
                   </p>
-                  <Button className="w-full">Open Chat</Button>
+                  <Button className="w-full" onClick={() => navigate("/aichat")}>
+                    Open Chat
+                  </Button>
                 </CardContent>
               </Card>
             </section>

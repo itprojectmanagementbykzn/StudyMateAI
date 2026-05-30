@@ -4,23 +4,18 @@ import Topbar from "@/components/layout/Topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import axios from "axios";
 import { useSearchParams } from "react-router-dom";
-import { useUpdateProgressMutation } from "@/api/Subject/csprogress.api";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "@/hooks/use-toast";
-
-interface QuizQuestion {
-  question: string;
-  options: string[];
-  answer: string;
-}
+import { RootState } from "@/redux/store";
+import { useAuth } from "@/lib/auth";
+import { markChapterComplete } from "@/lib/progress";
+import { addCompletedChapter } from "@/redux/csprogress.slice";
+import { fetchQuizQuestions, type QuizQuestion } from "@/lib/quiz";
 
 export default function FinalChapterQuiz() {
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
-  const [showResults, setShowResults] = useState(false);
   const [searchParams] = useSearchParams();
+  const language = useSelector((s: RootState) => s.language.language);
 
   const subject = searchParams.get("subject");
   const chapter = searchParams.get("chapter");
@@ -28,54 +23,78 @@ export default function FinalChapterQuiz() {
   const option = searchParams.get("option");
   const chaptername = searchParams.get("chaptername");
 
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
+  const [showResults, setShowResults] = useState(false);
 
-  const [updateProgress, { isLoading: isUpdating }] = useUpdateProgressMutation();
+  const dispatch = useDispatch();
+  const { user } = useAuth();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchQuiz = async () => {
     setLoading(true);
+    setError(null);
     setShowResults(false);
     setUserAnswers({});
-     console.log("Hello",chaptername,chapter,topic);
     try {
-      const res = await axios.get("https://hackathon-20uq.onrender.com/api/quizes", {
-        params: { subject, chapter, topic, option },
+      const data = await fetchQuizQuestions({
+        subject,
+        chapter,
+        topic,
+        option,
+        language,
       });
-
-      let parsed = res.data.quizes;
-      if (typeof parsed === "string") {
-        try {
-          parsed = JSON.parse(parsed);
-        } catch (e) {
-          console.error("Invalid JSON from API:", parsed);
-          parsed = [];
-        }
+      setQuestions(data);
+      if (data.length === 0) {
+        setError(
+          language === "my"
+            ? "မေးခွန်းများ မရရှိပါ။ ထပ်မံကြိုးစားကြည့်ပါ။"
+            : "No questions were returned. Please try again."
+        );
       }
-      setQuestions(parsed);
     } catch (err) {
-      console.error("Failed to fetch quiz", err);
+      const description =
+        err instanceof Error ? err.message : "Failed to load the quiz.";
+      setError(description);
+      toast({ title: "Quiz error", description, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSelect = (qIndex: number, choice: string) => {
     setUserAnswers((prev) => ({ ...prev, [qIndex]: choice }));
   };
 
-  const correctCount = questions.reduce((count, q, idx) => {
-    return userAnswers[idx] === q.answer ? count + 1 : count;
-  }, 0);
-
-  const scorePercent = ((correctCount / questions.length) * 100).toFixed(1);
+  const correctCount = questions.reduce(
+    (count, q, idx) => (userAnswers[idx] === q.answer ? count + 1 : count),
+    0
+  );
+  const scorePercent =
+    questions.length > 0
+      ? ((correctCount / questions.length) * 100).toFixed(1)
+      : "0.0";
 
   const handleCheckAnswers = async () => {
     setShowResults(true);
 
     const score = parseFloat(scorePercent);
-    if (score >= 80 && subject && chapter) {
+    if (score >= 80 && chaptername && chapter) {
+      if (!user) {
+        toast({
+          title: "⚠️ Not signed in",
+          description: "Please sign in again to save your progress.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const chapterId = parseInt(chapter);
+      setIsUpdating(true);
       try {
-        const chapterId = parseInt(chapter);
-    
-        await updateProgress({subject:chaptername, chapterId }).unwrap();
+        await markChapterComplete(user.uid, chaptername, chapterId);
+        dispatch(addCompletedChapter({ course: chaptername, chapter: chapterId }));
         toast({
           title: "🎉 Quiz Passed!",
           description: `You scored ${scorePercent}%. Chapter progress has been updated.`,
@@ -83,12 +102,14 @@ export default function FinalChapterQuiz() {
       } catch (err) {
         toast({
           title: "⚠️ Progress Update Failed",
-          description: "Your score was saved, but we couldn't update your progress.",
+          description:
+            "Your score was recorded, but we couldn't update your progress.",
           variant: "destructive",
         });
-        console.error("Failed to update progress:", err);
+      } finally {
+        setIsUpdating(false);
       }
-    } else {
+    } else if (score < 80) {
       toast({
         title: "❌ Quiz Failed",
         description: "You need at least 80% to pass. Try again!",
@@ -100,7 +121,7 @@ export default function FinalChapterQuiz() {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{`Quiz | Assistant AI`}</title>
+        <title>Final Chapter Quiz | StudyMateAI</title>
       </Helmet>
 
       <div className="flex">
@@ -109,12 +130,24 @@ export default function FinalChapterQuiz() {
           <Topbar />
           <main className="container py-6 space-y-6">
             <section className="rounded-xl border p-6 bg-card shadow-sm">
-              <h1 className="text-2xl font-bold">Topic Quiz</h1>
-              <p className="text-muted-foreground mt-2">Test your knowledge on this topic.</p>
+              <h1 className="text-2xl font-bold">Final Chapter Quiz</h1>
+              <p className="text-muted-foreground mt-2">
+                Score at least 80% to complete this chapter.
+              </p>
               <Button onClick={fetchQuiz} disabled={loading} className="mt-4">
-                {loading ? "Loading..." : "📋 Take Quiz"}
+                {loading
+                  ? language === "my"
+                    ? "ဖွင့်နေသည်..."
+                    : "Loading..."
+                  : "📋 Take Quiz"}
               </Button>
             </section>
+
+            {error && (
+              <section className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+                {error}
+              </section>
+            )}
 
             {questions.length > 0 && (
               <section className="space-y-6">
@@ -131,7 +164,6 @@ export default function FinalChapterQuiz() {
                         {q.options.map((opt, j) => {
                           const isSelected = userAnswers[i] === opt;
                           const isRightAnswer = q.answer === opt;
-
                           return (
                             <button
                               key={j}
@@ -150,11 +182,11 @@ export default function FinalChapterQuiz() {
 
                         {showResults && (
                           <div
-                            className={`text-sm mt-2 ${
-                              isCorrect ? "text-green-600" : "text-red-500"
-                            }`}
+                            className={`text-sm mt-2 ${isCorrect ? "text-green-600" : "text-red-500"}`}
                           >
-                            {isCorrect ? "✅ Correct" : `❌ Correct answer: ${q.answer}`}
+                            {isCorrect
+                              ? "✅ Correct"
+                              : `❌ Correct answer: ${q.answer}`}
                           </div>
                         )}
                       </CardContent>
@@ -164,7 +196,11 @@ export default function FinalChapterQuiz() {
 
                 {!showResults ? (
                   <div className="flex justify-end">
-                    <Button onClick={handleCheckAnswers} className="mt-4" disabled={isUpdating}>
+                    <Button
+                      onClick={handleCheckAnswers}
+                      className="mt-4"
+                      disabled={isUpdating}
+                    >
                       {isUpdating ? "Updating..." : "Check Answers"}
                     </Button>
                   </div>
@@ -175,7 +211,9 @@ export default function FinalChapterQuiz() {
                       You got <strong>{correctCount}</strong> out of{" "}
                       <strong>{questions.length}</strong> correct.
                     </p>
-                    <p className="text-muted-foreground">Score: {scorePercent}%</p>
+                    <p className="text-muted-foreground">
+                      Score: {scorePercent}%
+                    </p>
                   </div>
                 )}
               </section>

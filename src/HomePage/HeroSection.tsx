@@ -16,7 +16,7 @@ const HeroSection = () => {
               </div>
               
               <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">
-                <span className="block animate-fade-in text-3xl font-semibold">Level Up with our AI 🏆</span>
+                <span className="block animate-fade-in text-3xl font-semibold">Level Up with our AI 🏆</span>
                 <span className="block animate-fade-in animation-delay-300 text-gradient-hero">Be Top 3 Student</span>
                 <span className="inline-block animate-bounce animation-delay-600 ml-4"></span>
               </h1>
@@ -30,7 +30,7 @@ const HeroSection = () => {
                 <Zap className="h-5 w-5 mr-2" />
                 Start Quiz Practice
               </Button>
-              <Button variant="learning" size="lg" className="text-lg px-8 py-4">
+              <Button variant="secondary" size="lg" className="text-lg px-8 py-4">
                 <Target className="h-5 w-5 mr-2" />
                 Try AI Study Chat
               </Button>

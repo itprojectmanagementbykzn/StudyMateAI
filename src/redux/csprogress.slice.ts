@@ -1,47 +1,62 @@
-// src/redux/progress.slice.ts
-import { createSlice } from "@reduxjs/toolkit";
-import {ComputerScienceProgressApi} from "@/api/Subject/csprogress.api"
-interface SubProgressType {
+// Per-user Computer Science progress, sourced from Firestore (see src/lib/progress.ts
+// and src/components/ProgressSync.tsx). The slice holds the completed chapter
+// numbers per course plus a load status for the UI.
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { initialProgress, type ProgressMap } from "@/lib/progress";
+
+export type ProgressStatus = "idle" | "loading" | "ready" | "error";
+
+interface CSProgressState {
   userId: string | null;
-  progress: {
-    [courseName: string]: number[];
-  };
+  progress: ProgressMap;
+  status: ProgressStatus;
 }
 
-const initialState: SubProgressType = {
+const initialState: CSProgressState = {
   userId: null,
-  progress: {
-    Javascript: [],
-    "Frontend development": [],
-    "Introduction to Backend Development with Nodejs and Express": [],
-  },
+  progress: initialProgress(),
+  status: "idle",
 };
 
 const progressSlice = createSlice({
   name: "csprogress",
   initialState,
   reducers: {
+    setProgressStatus: (state, action: PayloadAction<ProgressStatus>) => {
+      state.status = action.payload;
+    },
+    setProgress: (
+      state,
+      action: PayloadAction<{ userId: string; progress: ProgressMap }>
+    ) => {
+      state.userId = action.payload.userId;
+      state.progress = action.payload.progress;
+      state.status = "ready";
+    },
+    // Optimistically mark a chapter complete after a passing quiz, so the UI
+    // updates without re-reading Firestore.
+    addCompletedChapter: (
+      state,
+      action: PayloadAction<{ course: string; chapter: number }>
+    ) => {
+      const { course, chapter } = action.payload;
+      const existing = state.progress[course] ?? [];
+      if (!existing.includes(chapter)) {
+        state.progress[course] = [...existing, chapter];
+      }
+    },
     resetProgress: (state) => {
-      state.progress = {
-        Javascript: [],
-        "Frontend development": [],
-        "Introduction to Backend Development with Nodejs and Express": [],
-      };
+      state.userId = null;
+      state.progress = initialProgress();
+      state.status = "idle";
     },
   },
-  extraReducers: (builder) => {
-      builder.addMatcher(ComputerScienceProgressApi.endpoints.getProgress.matchFulfilled, (state, action) => {
-        state.userId = action.payload.userId;
-        state.progress = action.payload.progress;
-        console.log(action.payload)
-      });
-      builder.addMatcher(ComputerScienceProgressApi.endpoints.updateProgress.matchFulfilled, (state, action) => {
-        state.userId = action.payload.userId;
-        state.progress= action.payload.progress;
-      });
-    },
 });
 
-export const { resetProgress } = progressSlice.actions;
+export const {
+  setProgress,
+  setProgressStatus,
+  addCompletedChapter,
+  resetProgress,
+} = progressSlice.actions;
 export default progressSlice.reducer;
-

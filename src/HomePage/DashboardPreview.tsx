@@ -25,24 +25,24 @@ const DashboardPreview = () => {
     color: 'text-success'
   }];
   const subjects = [{
-    name: 'Mathematics',
+    name: 'Fashion Illustration',
     progress: 75,
-    nextLesson: 'Algebra Basics',
+    nextLesson: 'Figure Proportions',
     improvement: '+15%'
   }, {
-    name: 'Science',
+    name: 'Fashion Design',
     progress: 60,
-    nextLesson: 'Chemistry Lab',
+    nextLesson: 'Draping Basics',
     improvement: '+8%'
   }, {
-    name: 'English',
+    name: 'Fashion Business',
     progress: 90,
-    nextLesson: 'Grammar Review',
+    nextLesson: 'Retail Merchandising',
     improvement: '+12%'
   }, {
-    name: 'History',
+    name: 'Textile Science',
     progress: 45,
-    nextLesson: 'World War II',
+    nextLesson: 'Fabric Types',
     improvement: '+20%'
   }];
   return <section className="py-20 bg-gradient-to-br from-muted/30 via-background to-primary/5">
@@ -58,7 +58,13 @@ const DashboardPreview = () => {
         <div className="grid md:grid-cols-4 gap-6 mb-12">
           {stats.map((stat, index) => {
           const IconComponent = stat.icon;
-          return;
+          return <Card key={index} className="p-6 text-center border-none shadow-elegant bg-card/60 backdrop-blur">
+              <CardContent className="p-0 space-y-2">
+                <IconComponent className={`h-8 w-8 mx-auto ${stat.color}`} />
+                <div className="text-3xl font-bold">{stat.value}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
+              </CardContent>
+            </Card>;
         })}
         </div>
 

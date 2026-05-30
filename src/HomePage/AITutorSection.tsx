@@ -155,7 +155,7 @@ const AITutorSection = () => {
               </CardContent>
             </Card>
 
-            <Button variant="cta" size="lg" className="w-full">
+            <Button variant="hero" size="lg" className="w-full">
               Try CS Chatbot Now - Free!
             </Button>
           </div>

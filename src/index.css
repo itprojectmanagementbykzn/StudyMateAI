@@ -102,5 +102,9 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    /* Myanmar fonts are appended so Burmese codepoints render correctly
+       while Latin text keeps the default sans stack. */
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Noto Sans Myanmar", "Padauk", "Myanmar Text", sans-serif;
   }
 }

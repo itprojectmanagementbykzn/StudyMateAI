@@ -1,6 +1,6 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Monitor, BarChart3, Bot, BookOpen, Target, TrendingUp } from 'lucide-react';
+import { BarChart3, Bot, BookOpen, TrendingUp } from 'lucide-react';
 import dashboardImage from '@/assets/assets/dashboard-screenshot.png';
 import subjectsImage from '@/assets/assets/subjects-screenshot.png';
 import aiAssistantImage from '@/assets/assets/ai-assistant-screenshot.png';
