@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { useUpdateProgressMutation } from "@/api/Subject/csprogress.api";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "@/hooks/use-toast";
 import { RootState } from "@/redux/store";
+import { useAuth } from "@/lib/auth";
+import { markChapterComplete } from "@/lib/progress";
+import { addCompletedChapter } from "@/redux/csprogress.slice";
 import { fetchQuizQuestions, type QuizQuestion } from "@/lib/quiz";
 
 export default function FinalChapterQuiz() {
@@ -27,8 +29,9 @@ export default function FinalChapterQuiz() {
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
   const [showResults, setShowResults] = useState(false);
 
-  const [updateProgress, { isLoading: isUpdating }] =
-    useUpdateProgressMutation();
+  const dispatch = useDispatch();
+  const { user } = useAuth();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchQuiz = async () => {
     setLoading(true);
@@ -79,9 +82,19 @@ export default function FinalChapterQuiz() {
 
     const score = parseFloat(scorePercent);
     if (score >= 80 && chaptername && chapter) {
+      if (!user) {
+        toast({
+          title: "⚠️ Not signed in",
+          description: "Please sign in again to save your progress.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const chapterId = parseInt(chapter);
+      setIsUpdating(true);
       try {
-        const chapterId = parseInt(chapter);
-        await updateProgress({ subject: chaptername, chapterId }).unwrap();
+        await markChapterComplete(user.uid, chaptername, chapterId);
+        dispatch(addCompletedChapter({ course: chaptername, chapter: chapterId }));
         toast({
           title: "🎉 Quiz Passed!",
           description: `You scored ${scorePercent}%. Chapter progress has been updated.`,
@@ -93,6 +106,8 @@ export default function FinalChapterQuiz() {
             "Your score was recorded, but we couldn't update your progress.",
           variant: "destructive",
         });
+      } finally {
+        setIsUpdating(false);
       }
     } else if (score < 80) {
       toast({

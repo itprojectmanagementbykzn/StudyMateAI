@@ -1,9 +1,13 @@
 import { Home, BookOpen, Bot, ClipboardCheck, LogOut, Languages } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { signOut } from "firebase/auth";
 import { cn } from "@/lib/utils";
+import { auth } from "@/lib/firebase";
 import { RootState } from "@/redux/store";
 import { toggleLanguage } from "@/redux/language.slice";
+import { resetProgress } from "@/redux/csprogress.slice";
+import { setComputerScienceProgress } from "@/redux/csoverallprogress.slice";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
@@ -17,10 +21,15 @@ export const Sidebar = () => {
   const dispatch = useDispatch();
   const language = useSelector((s: RootState) => s.language.language);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    navigate("/auth", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } finally {
+      // Clear per-user state so nothing leaks to the next sign-in on this device.
+      dispatch(resetProgress());
+      dispatch(setComputerScienceProgress(0));
+      navigate("/auth", { replace: true });
+    }
   };
 
   return (

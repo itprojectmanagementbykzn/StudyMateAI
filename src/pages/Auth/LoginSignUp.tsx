@@ -4,21 +4,51 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { useLoginMutation, useSignupMutation } from "@/api/auth.api";
+import { FcGoogle } from "react-icons/fc";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
+import { toast } from "@/hooks/use-toast";
 
 type FormFields = {
   name?: string;
-  studentid?: string;
   email: string;
   password: string;
 };
 
+// Turn Firebase's technical auth error codes into friendly, actionable messages.
+const friendlyAuthError = (err: unknown): string => {
+  const code =
+    err && typeof err === "object" && "code" in err
+      ? String((err as { code: unknown }).code)
+      : "";
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "Invalid email or password.";
+    case "auth/email-already-in-use":
+      return "That email is already registered. Try logging in instead.";
+    case "auth/weak-password":
+      return "Password should be at least 6 characters.";
+    case "auth/invalid-email":
+      return "Please enter a valid email address.";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Sign-in was cancelled.";
+    default:
+      return err instanceof Error ? err.message : "Something went wrong. Please try again.";
+  }
+};
+
 export const LoginSignUp = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const [login, { isLoading: loginLoading }] = useLoginMutation();
-  const [signUp, { isLoading: signUpLoading }] = useSignupMutation();
 
   const {
     register,
@@ -28,31 +58,53 @@ export const LoginSignUp = () => {
   } = useForm<FormFields>();
 
   const onSubmit = async (data: FormFields) => {
+    setLoading(true);
     try {
       if (isLogin) {
-        await login({ email: data.email!, password: data.password! }).unwrap();
+        await signInWithEmailAndPassword(auth, data.email, data.password);
       } else {
-        await signUp({
-          email: data.email!,
-          password: data.password!,
-          name: data.name ?? "",
-          studentid: data.studentid ?? "",
-        }).unwrap();
+        const credential = await createUserWithEmailAndPassword(
+          auth,
+          data.email,
+          data.password
+        );
+        if (data.name) {
+          await updateProfile(credential.user, { displayName: data.name });
+        }
       }
       reset();
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
+      toast({
+        title: "Authentication failed",
+        description: friendlyAuthError(err),
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate("/dashboard");
+    } catch (err) {
+      toast({
+        title: "Google sign-in failed",
+        description: friendlyAuthError(err),
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   // Define fields dynamically
   const fields = [
     ...(!isLogin
-      ? [
-          { label: "Name", name: "name", type: "text", required: true },
-        
-        ]
+      ? [{ label: "Name", name: "name", type: "text", required: true }]
       : []),
     { label: "Email", name: "email", type: "email", required: true },
     { label: "Password", name: "password", type: "password", required: true },
@@ -82,20 +134,33 @@ export const LoginSignUp = () => {
             </div>
           ))}
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loginLoading || signUpLoading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {isLogin
-              ? loginLoading
+              ? loading
                 ? "Logging in..."
                 : "Login"
-              : signUpLoading
+              : loading
               ? "Signing up..."
               : "Sign Up"}
           </Button>
         </form>
+
+        <div className="flex items-center gap-3 my-4">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">OR</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+        >
+          <FcGoogle className="h-5 w-5" />
+          Continue with Google
+        </Button>
 
         <p className="mt-4 text-sm text-center">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}

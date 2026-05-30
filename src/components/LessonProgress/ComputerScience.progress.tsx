@@ -1,9 +1,9 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import ProgressCircle from "@/components/ui/progress-circle";
 import { useNavigate } from "react-router-dom";
-import { useGetProgressQuery } from "@/api/Subject/csprogress.api";
 import { useLessonCatalog } from "@/lib/lessons";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 import { setComputerScienceProgress } from "@/redux/csoverallprogress.slice";
 import { useEffect } from "react";
 
@@ -11,13 +11,11 @@ export const ComputerScienceProgressComponent = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { data: ComputerSciencProgess, isLoading, isError } =
-    useGetProgressQuery();
+  const { progress: safeProgress, status } = useSelector(
+    (s: RootState) => s.csprogress
+  );
   const { data: catalog } = useLessonCatalog();
   const csData = catalog[0];
-
-  const safeProgress: Record<string, number[]> =
-    ComputerSciencProgess?.progress?.progress ?? {};
 
   const totalChaptersAll = csData.subSubject.reduce(
     (sum, group) => sum + group.chapter.length,
@@ -36,12 +34,12 @@ export const ComputerScienceProgressComponent = () => {
 
   // Keep the dashboard's overall progress in sync (side effect, not render).
   useEffect(() => {
-    if (ComputerSciencProgess) {
+    if (status === "ready") {
       dispatch(setComputerScienceProgress(overallProgress));
     }
-  }, [ComputerSciencProgess, overallProgress, dispatch]);
+  }, [status, overallProgress, dispatch]);
 
-  if (isLoading) {
+  if (status === "loading" || status === "idle") {
     return (
       <main className="flex justify-center items-center h-[60vh]">
         <p className="text-lg font-medium text-muted-foreground">
@@ -51,7 +49,7 @@ export const ComputerScienceProgressComponent = () => {
     );
   }
 
-  if (isError || !ComputerSciencProgess) {
+  if (status === "error") {
     return (
       <main className="flex justify-center items-center h-[60vh]">
         <p className="text-lg font-medium text-red-500">

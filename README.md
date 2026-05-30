@@ -12,19 +12,20 @@ and test themselves with **AI-generated quizzes** — all with progress tracking
   answers in English or Burmese, aware of the chapter you're currently studying.
 - **Explain in Burmese / မြန်မာလို ရှင်းပြပါ** — one click on any lesson topic for
   a Burmese explanation from Gemini.
-- **AI-generated quizzes** — English quizzes from the backend; Burmese quizzes
-  generated on the fly by Gemini. Pass the final chapter quiz (≥ 80%) to unlock
-  the next chapter.
+- **AI-generated quizzes** — English and Burmese quizzes are generated on the fly
+  by Gemini. Pass the final chapter quiz (≥ 80%) to unlock the next chapter.
 - **Global language toggle** — a single English ⇄ မြန်မာ switch (in the sidebar
   and the chat) drives every AI feature. Your choice is persisted.
-- **Progress tracking** — per-chapter and overall progress, persisted across
-  sessions.
+- **Accounts & sign-in** — email/password or Google sign-in via **Firebase Auth**.
+- **Progress tracking** — per-chapter and overall progress saved to **Cloud
+  Firestore**, scoped to each signed-in user and synced across devices.
 
 ## Tech stack
 
 - **React 18** + **TypeScript** + **Vite**
 - **Tailwind CSS** + **shadcn/ui** (Radix primitives)
-- **Redux Toolkit** (incl. RTK Query) + **redux-persist**
+- **Redux Toolkit** + **redux-persist** for UI state
+- **Firebase** — Authentication (email/password + Google) and Cloud Firestore
 - **Google Gen AI SDK** (`@google/genai`) — Gemini models
 - **Vitest** + **Testing Library** for tests
 
@@ -38,7 +39,8 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-#    then edit .env and set GEMINI_API_KEY=<your key>
+#    then edit .env: set GEMINI_API_KEY and the VITE_FIREBASE_* web config
+#    (see "Firebase setup" below)
 
 # 3. Start the dev server (http://localhost:8080)
 npm run dev
@@ -57,14 +59,29 @@ See [`.env.example`](./.env.example). `.env` is git-ignored — never commit it.
 | -------------------- | ------ | -------- | -------------------------------------------------------------------------------------------- |
 | `GEMINI_API_KEY`     | Server | Yes      | Google Gemini API key ([get one](https://aistudio.google.com/app/apikey)). Read only by the `/api` functions — never shipped to the browser. |
 | `GEMINI_MODEL`       | Server | No       | Gemini model id. Defaults to `gemini-flash-latest` (auto-updating Flash).                    |
-| `VITE_API_URL`       | Client | No       | Backend base URL for quizzes / progress / auth. Defaults to the hosted hackathon API.        |
+| `VITE_FIREBASE_*`    | Client | Yes      | Firebase web config (`API_KEY`, `AUTH_DOMAIN`, `PROJECT_ID`, `STORAGE_BUCKET`, `MESSAGING_SENDER_ID`, `APP_ID`). Non-secret — access is enforced by Firestore rules. Copy from your Firebase project settings. |
 | `VITE_GEMINI_PROXY_URL` | Client | No    | Override the AI proxy endpoint. Defaults to `/api/gemini`.                                   |
 
 > **Security:** the Gemini key is **server-side only** (`GEMINI_API_KEY`, no
 > `VITE_` prefix), so it and the `@google/genai` SDK never ship in the client
 > bundle. Only `VITE_*` variables are exposed to the browser, and none of them
-> are secret. On Vercel, set `GEMINI_API_KEY` in **Project Settings →
+> are secret — including the Firebase web config, which merely identifies the
+> project (Firestore security rules are the real access control). On Vercel, set
+> `GEMINI_API_KEY` and the `VITE_FIREBASE_*` values in **Project Settings →
 > Environment Variables** (not in a committed file).
+
+### Firebase setup
+
+Auth and progress data live in Firebase, so you need your own Firebase project:
+
+1. Create a project at the [Firebase console](https://console.firebase.google.com/).
+2. **Authentication → Sign-in method**: enable **Email/Password** and **Google**.
+3. **Firestore Database**: create a database.
+4. Deploy the security rules in [`firestore.rules`](./firestore.rules) so each
+   user can read/write only their own `users/{uid}` document
+   (`firebase deploy --only firestore:rules`, or paste them in the console).
+5. **Project settings → General → Your apps**: register a Web app and copy the
+   config values into `.env` as the `VITE_FIREBASE_*` variables.
 
 ## Scripts
 
@@ -91,29 +108,32 @@ The client helper exposes three functions:
 
 - `sendChat()` powers the tutor chat (`StudyChat` / `MainChatbot`).
 - `explainTopic()` powers the **Explain in Burmese** buttons.
-- `generateQuiz()` produces Burmese quizzes as structured JSON.
+- `generateQuiz()` produces quizzes (English and Burmese) as structured JSON.
 
 The active language lives in a persisted Redux slice
 ([`src/redux/language.slice.ts`](./src/redux/language.slice.ts)) and is applied
-to the system prompt and quiz generation. Quizzes route through
-[`src/lib/quiz.ts`](./src/lib/quiz.ts): English from the backend, Burmese from
-Gemini. Burmese text renders via the bundled "Noto Sans Myanmar" font.
+to the system prompt and quiz generation. All quizzes route through
+[`src/lib/quiz.ts`](./src/lib/quiz.ts) to Gemini, in whichever language is
+active. Burmese text renders via the bundled "Noto Sans Myanmar" font.
 
 ## Project structure
 
 ```
 api/              Vercel serverless functions: gemini.ts (AI proxy), lessons.ts
+firestore.rules   Firestore security rules (each user owns their users/{uid} doc)
 src/
-  api/            RTK Query endpoints (auth, progress) + base config
   components/
     ai/           StudyChat, MainChatbot, ExplainInBurmese
-    layout/       Sidebar (with language toggle), Topbar
+    layout/       Sidebar (language toggle + sign-out), Topbar (profile)
     ComputerScience/  lesson content per chapter
     Subjects/     chapter list with progress
-  lib/            gemini.ts (proxy client), gemini-core.ts, quiz.ts, lessons.ts, env.ts, utils.ts
+    ProgressSync.tsx  loads Firestore progress into Redux on sign-in
+  lib/            firebase.ts (init), auth.tsx (AuthProvider/useAuth),
+                  progress.ts (Firestore data layer), gemini.ts (proxy client),
+                  gemini-core.ts, quiz.ts, lessons.ts, utils.ts
   server/         geminiHandler.ts, lessons.ts (shared by /api + Vite dev middleware)
-  pages/          Dashboard, Lessons, Quiz, FinalChapterQuiz, chapter pages
-  redux/          store, slices (auth, language, progress, latest lesson)
+  pages/          Auth (LoginSignUp), Dashboard, Lessons, Quiz, FinalChapterQuiz, chapter pages
+  redux/          store, slices (language, progress, latest lesson, overall progress)
 ```
 
 ## Testing & CI

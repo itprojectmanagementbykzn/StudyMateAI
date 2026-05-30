@@ -5,7 +5,8 @@ import { type SubjectDataType } from "@/components/SubjectData/ComputerScience/C
 import { useLessonCatalog } from "@/lib/lessons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Trophy } from "lucide-react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 import { setLatestLesson } from "@/redux/latestlession.slice";
 import {
   Accordion,
@@ -13,30 +14,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useGetProgressQuery } from "@/api/Subject/csprogress.api";
 
 interface SubjectProp {
   subjectname: string;
-}
-
-interface SubProgessType {
-  userId: string;
-  progress: {
-    progress: {
-      [courseName: string]: number[];
-    };
-  };
 }
 
 const ChaptersComponent: React.FC<SubjectProp> = ({ subjectname }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const {
-    data: ComputerSciencProgess,
-    isLoading,
-    isError,
-  } = useGetProgressQuery();
+  const { progress, status } = useSelector((s: RootState) => s.csprogress);
   const { data: catalog } = useLessonCatalog();
 
   useEffect(() => {
@@ -51,11 +38,11 @@ const ChaptersComponent: React.FC<SubjectProp> = ({ subjectname }) => {
     }
   }, [location.hash]);
 
-  if (isLoading) return <p>Loading progress...</p>;
-  if (isError || !ComputerSciencProgess) return <p>Failed to load progress.</p>;
+  if (status === "loading" || status === "idle")
+    return <p>Loading progress...</p>;
+  if (status === "error") return <p>Failed to load progress.</p>;
 
   const SubData: SubjectDataType = catalog[0];
-  const SubProgress: SubProgessType = ComputerSciencProgess;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -65,8 +52,7 @@ const ChaptersComponent: React.FC<SubjectProp> = ({ subjectname }) => {
 
       <div className="space-y-4">
         {SubData.subSubject.map((subsubdata) => {
-          const completedChapter =
-            SubProgress.progress.progress[subsubdata.name] || [];
+          const completedChapter = progress[subsubdata.name] || [];
 
           return (
             <div

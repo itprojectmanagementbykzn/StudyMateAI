@@ -8,41 +8,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useEffect } from "react";
-import { useSelector } from "react-redux";
-import { jwtDecode } from "jwt-decode";
-import { RootState } from "@/redux/store";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
 import { User } from "lucide-react";
 
-interface DecodeTokenType {
-  id: string;
-  studentid: string;
-  studentname: string;
-  email: string;
-  iat: number;
-  exp: number;
-}
-
-const decodeAuthToken = (token: string): DecodeTokenType | null => {
-  try {
-    return jwtDecode<DecodeTokenType>(token);
-  } catch {
-    return null;
-  }
-};
-
 export const Topbar = () => {
-  const navigate = useNavigate();
-  const authToken = useSelector((state: RootState) => state.auth.accessToken);
-
-  useEffect(() => {
-    if (!authToken) navigate("/auth");
-  }, [authToken, navigate]);
-
-  if (!authToken) return null;
-
-  const decodeToken = decodeAuthToken(authToken);
+  const { user } = useAuth();
 
   return (
     <header className="h-16 border-b bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40 sticky top-0 z-10">
@@ -96,11 +66,11 @@ export const Topbar = () => {
                 </div>
                 <div>
                   <div className="font-medium">
-                    {decodeToken?.studentname ?? "Student"}
+                    {user?.displayName ?? "Student"}
                   </div>
-                  {decodeToken?.email && (
+                  {user?.email && (
                     <p className="text-sm text-muted-foreground">
-                      {decodeToken.email}
+                      {user.email}
                     </p>
                   )}
                 </div>

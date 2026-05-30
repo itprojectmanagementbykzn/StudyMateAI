@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import OptionPage from "./pages/option";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
+import { AuthProvider } from "./lib/auth";
+import { ProgressSync } from "./components/ProgressSync";
 import { RouteGuard } from "./components/RouteGuard/RouteGuard";
 //New
 import MainChatbot from "./components/ai/MainChatbot";
@@ -24,6 +26,8 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <Provider store={store}>
+    <AuthProvider>
+    <ProgressSync />
     <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -53,6 +57,7 @@ const App = () => (
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>
+    </AuthProvider>
   </Provider>
 );
 
