@@ -3,22 +3,28 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import type { ServerResponse } from "http";
-import { runGemini } from "./src/server/geminiHandler";
-import { getLessonCatalog } from "./src/server/lessons";
 
 // During `vite dev` the /api routes are served here using the SAME handlers as
 // the deployed Vercel serverless functions, so the AI tutor and lesson catalog
-// work locally with `npm run dev` (no `vercel dev` required). The Gemini key is
-// read from the environment server-side and never exposed to the browser.
+// work locally with `npm run dev` (no `vercel dev` required). The handlers are
+// loaded lazily via Vite's SSR module loader and the plugin only applies to the
+// dev server (`apply: "serve"`), so server-only code (and @google/genai) never
+// enters the client build. The Gemini key is read server-side, never exposed.
 function apiDevServer(env: Record<string, string>): Plugin {
   return {
     name: "studymate-api-dev",
+    apply: "serve",
     configureServer(server) {
       server.middlewares.use(
         "/api/lessons",
         (_req: Connect.IncomingMessage, res: ServerResponse) => {
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ subjects: getLessonCatalog() }));
+          void (async () => {
+            const { getLessonCatalog } = (await server.ssrLoadModule(
+              "/src/server/lessons.ts"
+            )) as typeof import("./src/server/lessons");
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ subjects: getLessonCatalog() }));
+          })();
         }
       );
 
@@ -37,6 +43,9 @@ function apiDevServer(env: Record<string, string>): Plugin {
           req.on("data", (chunk: Buffer) => chunks.push(chunk));
           req.on("end", () => {
             void (async () => {
+              const { runGemini } = (await server.ssrLoadModule(
+                "/src/server/geminiHandler.ts"
+              )) as typeof import("./src/server/geminiHandler");
               let body: unknown = {};
               try {
                 const raw = Buffer.concat(chunks).toString("utf8");
